@@ -198,6 +198,9 @@ button:disabled {
   border-radius: 14px;
   font-size: 14px;
   line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .chat-message.user .chat-bubble {
@@ -327,8 +330,6 @@ button:disabled {
   color: #334155;
   line-height: 1.8;
 }
-
-/* ---------- Chat input ---------- */
 
 /* ---------- Chat Input ---------- */
 
