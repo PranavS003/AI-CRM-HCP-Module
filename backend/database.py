@@ -1,6 +1,8 @@
 import json
 import sqlite3
 from pathlib import Path
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 DB_PATH = Path(__file__).parent / "crm.db"
 
@@ -56,6 +58,10 @@ def save_interaction(data: dict):
     conn = get_connection()
     cursor = conn.cursor()
 
+    current_time = datetime.now(
+        ZoneInfo("Asia/Kolkata")
+    ).strftime("%Y-%m-%d %H:%M:%S")
+
     cursor.execute(
         """
         INSERT INTO interactions
@@ -66,9 +72,10 @@ def save_interaction(data: dict):
             product,
             sentiment,
             materials_shared,
-            follow_up
+            follow_up,
+            created_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             normalize(data.get("doctor_name")),
@@ -78,6 +85,7 @@ def save_interaction(data: dict):
             normalize(data.get("sentiment")),
             normalize(data.get("materials_shared")),
             normalize(data.get("follow_up")),
+            current_time,
         ),
     )
 

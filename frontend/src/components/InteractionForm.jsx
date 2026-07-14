@@ -1,10 +1,22 @@
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { updateFormField } from "../store/crmSlice";
 
 function InteractionForm() {
+  const dispatch = useDispatch();
+
   const formData = useSelector((state) => state.crm.formData);
   const selectedInteraction = useSelector(
     (state) => state.crm.selectedInteraction
   );
+
+  function handleChange(e) {
+    dispatch(
+      updateFormField({
+        field: e.target.name,
+        value: e.target.value,
+      })
+    );
+  }
 
   async function handleSave() {
     if (!selectedInteraction) {
@@ -33,6 +45,29 @@ function InteractionForm() {
     }
   }
 
+  const createdAt = selectedInteraction?.created_at || "";
+
+  let formattedDate = "";
+  let formattedTime = "";
+
+  if (createdAt) {
+    const date = new Date(createdAt.replace(" ", "T"));
+
+    formattedDate = date.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      timeZone: "Asia/Kolkata",
+    });
+
+    formattedTime = date.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "Asia/Kolkata",
+    });
+  }
+
   return (
     <div className="left-panel">
       <h2>HCP Interaction Details</h2>
@@ -52,8 +87,23 @@ function InteractionForm() {
           }}
         >
           <span>Selected Interaction</span>
-
           <span>#{selectedInteraction.id}</span>
+        </div>
+      )}
+
+      {createdAt && (
+        <div
+          style={{
+            display: "flex",
+            gap: "25px",
+            marginBottom: "18px",
+            color: "#555",
+            fontSize: "14px",
+            fontWeight: 500,
+          }}
+        >
+          <span>📅 {formattedDate}</span>
+          <span>🕒 {formattedTime}</span>
         </div>
       )}
 
@@ -66,32 +116,67 @@ function InteractionForm() {
       >
         <div>
           <label>Doctor Name</label>
-          <input value={formData.doctor_name || ""} readOnly />
+
+          <input
+            name="doctor_name"
+            value={formData.doctor_name || ""}
+            onChange={handleChange}
+          />
         </div>
 
         <div>
           <label>Hospital</label>
-          <input value={formData.hospital || ""} readOnly />
+
+          <input
+            name="hospital"
+            value={formData.hospital || ""}
+            onChange={handleChange}
+          />
         </div>
 
         <div>
           <label>Meeting Type</label>
-          <input value={formData.meeting_type || ""} readOnly />
+
+          <input
+            name="meeting_type"
+            value={formData.meeting_type || ""}
+            onChange={handleChange}
+          />
         </div>
 
         <div>
           <label>Product</label>
-          <input value={formData.product || ""} readOnly />
+
+          <input
+            name="product"
+            value={formData.product || ""}
+            onChange={handleChange}
+          />
         </div>
 
         <div>
           <label>Sentiment</label>
-          <input value={formData.sentiment || ""} readOnly />
+
+          <select
+            name="sentiment"
+            value={(formData.sentiment || "").toLowerCase()}
+            onChange={handleChange}
+          >
+            <option value="">Select Sentiment</option>
+            <option value="positive">🟢 Positive</option>
+            <option value="neutral">🟡 Neutral</option>
+            <option value="negative">🔴 Negative</option>
+          </select>
         </div>
 
         <div>
           <label>Materials Shared</label>
-          <input value={formData.materials_shared || ""} readOnly />
+
+          <input
+            name="materials_shared"
+            value={formData.materials_shared || ""}
+            onChange={handleChange}
+          />
         </div>
       </div>
 
@@ -104,8 +189,9 @@ function InteractionForm() {
 
         <textarea
           rows={4}
+          name="follow_up"
           value={formData.follow_up || ""}
-          readOnly
+          onChange={handleChange}
         />
       </div>
 

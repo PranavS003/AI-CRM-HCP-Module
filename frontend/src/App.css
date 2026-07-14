@@ -130,11 +130,21 @@ button:disabled {
 .chat-box {
   height: 420px;
   overflow-y: auto;
+  overflow-x: hidden;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
   background: #f8fafc;
   padding: 16px;
   margin-bottom: 16px;
+}
+
+.chat-box pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  font-family: inherit;
+  line-height: 1.6;
 }
 
 /* ---------- Chat header ---------- */

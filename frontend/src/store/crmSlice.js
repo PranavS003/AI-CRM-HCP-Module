@@ -22,6 +22,11 @@ const crmSlice = createSlice({
       state.formData = action.payload;
     },
 
+    updateFormField(state, action) {
+      const { field, value } = action.payload;
+      state.formData[field] = value;
+    },
+
     setInteractions(state, action) {
       state.interactions = action.payload;
     },
@@ -39,6 +44,7 @@ const crmSlice = createSlice({
 
 export const {
   setFormData,
+  updateFormField,
   setInteractions,
   setSelectedInteraction,
   clearForm,
