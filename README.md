@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project is an AI-first Customer Relationship Management (CRM) application for Healthcare Professional (HCP) interactions.
+This project is an AI- Customer Relationship Management (CRM) application for Healthcare Professional (HCP) interactions.
 
 Users do not manually fill the interaction form. Instead, they describe the meeting in natural language through the AI assistant. A LangGraph-powered AI agent determines the user's intent, invokes the appropriate tool, and automatically updates the interaction form.
 
