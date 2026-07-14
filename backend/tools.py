@@ -27,9 +27,16 @@ doctor_name
 hospital
 meeting_type
 product
+topics_discussed
 sentiment
 materials_shared
+outcomes
 follow_up
+
+Rules:
+- topics_discussed should briefly summarize the discussion.
+- outcomes should describe the meeting outcome or decision.
+- Return empty strings for missing fields.
 
 Text:
 

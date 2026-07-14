@@ -8,10 +8,6 @@ DB_PATH = Path(__file__).parent / "crm.db"
 
 
 def normalize(value):
-    """
-    Convert complex Python objects into SQLite-friendly strings.
-    """
-
     if value is None:
         return ""
 
@@ -42,8 +38,10 @@ def init_db():
             hospital TEXT,
             meeting_type TEXT,
             product TEXT,
+            topics_discussed TEXT,
             sentiment TEXT,
             materials_shared TEXT,
+            outcomes TEXT,
             follow_up TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -51,6 +49,13 @@ def init_db():
     )
 
     conn.commit()
+
+    cursor.execute(
+        "SELECT name FROM sqlite_master WHERE type='table';"
+    )
+
+    print("SQLite Tables:", cursor.fetchall())
+
     conn.close()
 
 
@@ -70,20 +75,24 @@ def save_interaction(data: dict):
             hospital,
             meeting_type,
             product,
+            topics_discussed,
             sentiment,
             materials_shared,
+            outcomes,
             follow_up,
             created_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             normalize(data.get("doctor_name")),
             normalize(data.get("hospital")),
             normalize(data.get("meeting_type")),
             normalize(data.get("product")),
+            normalize(data.get("topics_discussed")),
             normalize(data.get("sentiment")),
             normalize(data.get("materials_shared")),
+            normalize(data.get("outcomes")),
             normalize(data.get("follow_up")),
             current_time,
         ),
@@ -145,8 +154,10 @@ def update_interaction(interaction_id: int, data: dict):
             hospital=?,
             meeting_type=?,
             product=?,
+            topics_discussed=?,
             sentiment=?,
             materials_shared=?,
+            outcomes=?,
             follow_up=?
         WHERE id=?
         """,
@@ -155,8 +166,10 @@ def update_interaction(interaction_id: int, data: dict):
             normalize(data.get("hospital")),
             normalize(data.get("meeting_type")),
             normalize(data.get("product")),
+            normalize(data.get("topics_discussed")),
             normalize(data.get("sentiment")),
             normalize(data.get("materials_shared")),
+            normalize(data.get("outcomes")),
             normalize(data.get("follow_up")),
             interaction_id,
         ),
@@ -181,12 +194,16 @@ def search_interactions(keyword: str):
             OR hospital LIKE ?
             OR meeting_type LIKE ?
             OR product LIKE ?
+            OR topics_discussed LIKE ?
             OR sentiment LIKE ?
             OR materials_shared LIKE ?
+            OR outcomes LIKE ?
             OR follow_up LIKE ?
         ORDER BY created_at DESC
         """,
         (
+            like,
+            like,
             like,
             like,
             like,

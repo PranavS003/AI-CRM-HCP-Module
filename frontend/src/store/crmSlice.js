@@ -6,8 +6,10 @@ const initialState = {
     hospital: "",
     meeting_type: "",
     product: "",
+    topics_discussed: "",
     sentiment: "",
     materials_shared: "",
+    outcomes: "",
     follow_up: "",
   },
   interactions: [],
@@ -19,7 +21,10 @@ const crmSlice = createSlice({
   initialState,
   reducers: {
     setFormData(state, action) {
-      state.formData = action.payload;
+      state.formData = {
+        ...initialState.formData,
+        ...action.payload,
+      };
     },
 
     updateFormField(state, action) {
@@ -33,6 +38,13 @@ const crmSlice = createSlice({
 
     setSelectedInteraction(state, action) {
       state.selectedInteraction = action.payload;
+
+      if (action.payload) {
+        state.formData = {
+          ...initialState.formData,
+          ...action.payload,
+        };
+      }
     },
 
     clearForm(state) {

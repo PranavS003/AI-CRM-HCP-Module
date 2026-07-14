@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { setFormData } from "../store/crmSlice";
 
@@ -6,12 +6,38 @@ function AIChat({ loadInteractions }) {
   const dispatch = useDispatch();
 
   const [input, setInput] = useState("");
-  const [response, setResponse] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const bottomRef = useRef(null);
+
+  const [messages, setMessages] = useState([
+    {
+      role: "assistant",
+      text:
+        "Welcome! Describe your interaction...",
+    },
+  ]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [messages]);
 
   async function handleSend() {
     if (!input.trim()) return;
 
+    const userMessage = input;
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "user",
+        text: userMessage,
+      },
+    ]);
+
+    setInput("");
     setLoading(true);
 
     try {
@@ -21,17 +47,13 @@ function AIChat({ loadInteractions }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          text: input,
+          text: userMessage,
         }),
       });
 
       const data = await res.json();
 
-      console.log(data);
-
-      // ------------------------
-      // LOG / EDIT
-      // ------------------------
+      let assistantReply = "Interaction processed.";
 
       if (data.data) {
         dispatch(
@@ -40,94 +62,116 @@ function AIChat({ loadInteractions }) {
             hospital: data.data.hospital || "",
             meeting_type: data.data.meeting_type || "",
             product: data.data.product || "",
+            topics_discussed: data.data.topics_discussed || "",
             sentiment: data.data.sentiment || "",
             materials_shared: data.data.materials_shared || "",
+            outcomes: data.data.outcomes || "",
             follow_up: data.data.follow_up || "",
           })
         );
 
-        setResponse("✅ Interaction processed successfully.");
+        assistantReply = `✅ Interaction Logged Successfully
+
+Doctor : ${data.data.doctor_name || "-"}
+
+Hospital : ${data.data.hospital || "-"}
+
+Meeting : ${data.data.meeting_type || "-"}
+
+Product : ${data.data.product || "-"}
+
+Sentiment : ${data.data.sentiment || "-"}
+
+The CRM form has been updated automatically.`;
+      } else if (data.summary) {
+        assistantReply = data.summary;
+      } else if (data.results) {
+        assistantReply = JSON.stringify(data.results, null, 2);
+      } else if (data.suggestions) {
+        assistantReply = data.suggestions;
+      } else if (data.message) {
+        assistantReply = data.message;
       }
 
-      // ------------------------
-      // SEARCH
-      // ------------------------
-
-      else if (data.results) {
-        setResponse(JSON.stringify(data.results, null, 2));
-      }
-
-      // ------------------------
-      // SUMMARY
-      // ------------------------
-
-      else if (data.summary) {
-        setResponse(data.summary);
-      }
-
-      // ------------------------
-      // FOLLOW UP
-      // ------------------------
-
-      else if (data.suggestions) {
-        setResponse(data.suggestions);
-      }
-
-      // ------------------------
-      // ERROR
-      // ------------------------
-
-      else if (data.message) {
-        setResponse(data.message);
-      }
-
-      else {
-        setResponse(JSON.stringify(data, null, 2));
-      }
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          text: assistantReply,
+        },
+      ]);
 
       if (loadInteractions) {
         await loadInteractions();
       }
-
-      setInput("");
-
     } catch (err) {
-
       console.error(err);
 
-      setResponse("❌ Backend Error");
-
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          text: "❌ Unable to connect to the backend.",
+        },
+      ]);
     } finally {
-
       setLoading(false);
-
     }
   }
 
   return (
     <div className="right-panel">
 
-      <h2>AI Assistant</h2>
+      <div className="ai-chat-header">
 
-      <div className="chat-box">
-        <pre>{response}</pre>
+        <div className="ai-chat-header-title">
+
+          <span>🤖</span>
+
+          <span>AI Assistant</span>
+
+          <span className="ai-status-dot"></span>
+
+        </div>
+
       </div>
 
-      <textarea
-        rows="6"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder="Describe your interaction..."
-        disabled={loading}
-      />
+      <div className="chat-box">
 
-      <button
-        onClick={handleSend}
-        disabled={loading}
-        style={{ marginTop: "10px" }}
-      >
-        {loading ? "Processing..." : "Send"}
-      </button>
+        {messages.map((msg, index) => (
+          <div
+            key={index}
+            className={`chat-message ${msg.role}`}
+          >
+            <div className="chat-bubble">
+              {msg.text}
+            </div>
+          </div>
+        ))}
+
+        <div ref={bottomRef} />
+
+      </div>
+
+      <div className="chat-input-container">
+
+  <textarea
+    rows={4}
+    value={input}
+    disabled={loading}
+    placeholder="Describe your interaction..."
+    onChange={(e) => setInput(e.target.value)}
+  />
+
+  <button
+    className="send-btn"
+    onClick={handleSend}
+    disabled={loading}
+  >
+    {loading ? "Processing..." : "Send"}
+  </button>
+
+</div>
 
     </div>
   );

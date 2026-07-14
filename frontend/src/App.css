@@ -330,14 +330,70 @@ button:disabled {
 
 /* ---------- Chat input ---------- */
 
-.chat-input-row {
-  display: flex;
-  gap: 10px;
-  align-items: flex-end;
+/* ---------- Chat Input ---------- */
+
+.chat-input-container {
+  position: relative;
+  margin-top: 16px;
 }
 
-.chat-input-row textarea { flex: 1; }
-.chat-input-row button { flex-shrink: 0; }
+.chat-input-container textarea {
+  width: 100%;
+  min-height: 120px;
+  resize: none;
+
+  padding: 16px;
+  padding-right: 110px;
+
+  border: 1px solid #d7dee8;
+  border-radius: 12px;
+  background: #fafbfd;
+
+  font-size: 14px;
+  line-height: 1.6;
+  transition: .25s;
+}
+
+.chat-input-container textarea:focus {
+  outline: none;
+  background: #ffffff;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, .10);
+}
+
+.send-btn {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+
+  width: 85px;
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 10px;
+
+  background: #2563eb;
+  color: white;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: .25s;
+}
+
+.send-btn:hover {
+  background: #1d4ed8;
+}
+
+.send-btn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
 
 /* ---------- History (numbered rows + icon delete button) ---------- */
 

@@ -37,7 +37,6 @@ function InteractionForm() {
       );
 
       const data = await res.json();
-
       alert(data.message || "Interaction Updated Successfully ✅");
     } catch (err) {
       console.error(err);
@@ -116,7 +115,6 @@ function InteractionForm() {
       >
         <div>
           <label>Doctor Name</label>
-
           <input
             name="doctor_name"
             value={formData.doctor_name || ""}
@@ -126,7 +124,6 @@ function InteractionForm() {
 
         <div>
           <label>Hospital</label>
-
           <input
             name="hospital"
             value={formData.hospital || ""}
@@ -136,7 +133,6 @@ function InteractionForm() {
 
         <div>
           <label>Meeting Type</label>
-
           <input
             name="meeting_type"
             value={formData.meeting_type || ""}
@@ -146,16 +142,35 @@ function InteractionForm() {
 
         <div>
           <label>Product</label>
-
           <input
             name="product"
             value={formData.product || ""}
             onChange={handleChange}
           />
         </div>
+      </div>
 
+      <div style={{ marginTop: 18 }}>
+        <label>Topics Discussed</label>
+        <textarea
+          rows={3}
+          name="topics_discussed"
+          placeholder="Key discussion points..."
+          value={formData.topics_discussed || ""}
+          onChange={handleChange}
+        />
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "18px",
+          marginTop: 18,
+        }}
+      >
         <div>
-          <label>Sentiment</label>
+          <label>Observed HCP Sentiment</label>
 
           <select
             name="sentiment"
@@ -163,9 +178,9 @@ function InteractionForm() {
             onChange={handleChange}
           >
             <option value="">Select Sentiment</option>
-            <option value="positive">🟢 Positive</option>
-            <option value="neutral">🟡 Neutral</option>
-            <option value="negative">🔴 Negative</option>
+            <option value="positive">😊 Positive</option>
+            <option value="neutral">😐 Neutral</option>
+            <option value="negative">☹️ Negative</option>
           </select>
         </div>
 
@@ -180,16 +195,25 @@ function InteractionForm() {
         </div>
       </div>
 
-      <div
-        style={{
-          marginTop: 18,
-        }}
-      >
-        <label>Follow-up Plan</label>
+      <div style={{ marginTop: 18 }}>
+        <label>Outcomes</label>
+
+        <textarea
+          rows={3}
+          name="outcomes"
+          placeholder="Key outcomes or agreements..."
+          value={formData.outcomes || ""}
+          onChange={handleChange}
+        />
+      </div>
+
+      <div style={{ marginTop: 18 }}>
+        <label>Follow-up Actions</label>
 
         <textarea
           rows={4}
           name="follow_up"
+          placeholder="Next steps..."
           value={formData.follow_up || ""}
           onChange={handleChange}
         />

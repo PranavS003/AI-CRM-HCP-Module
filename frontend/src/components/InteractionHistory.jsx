@@ -26,10 +26,48 @@ function TrashIcon() {
   );
 }
 
+function getSentiment(sentiment) {
+  switch ((sentiment || "").toLowerCase()) {
+    case "positive":
+      return {
+        text: "🟢 Positive",
+        color: "#16a34a",
+      };
+
+    case "negative":
+      return {
+        text: "🔴 Negative",
+        color: "#dc2626",
+      };
+
+    default:
+      return {
+        text: "🟡 Neutral",
+        color: "#ca8a04",
+      };
+  }
+}
+
+function formatDate(dateString) {
+  if (!dateString) return "";
+
+  const date = new Date(dateString.replace(" ", "T"));
+
+  return date.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
 function InteractionHistory() {
   const dispatch = useDispatch();
 
   const interactions = useSelector((state) => state.crm.interactions);
+
   const selectedInteraction = useSelector(
     (state) => state.crm.selectedInteraction
   );
@@ -50,7 +88,7 @@ function InteractionHistory() {
 
   async function deleteInteraction(id) {
     const ok = window.confirm(
-      "Are you sure you want to delete this interaction?"
+      "Delete this interaction?"
     );
 
     if (!ok) return;
@@ -81,72 +119,112 @@ function InteractionHistory() {
 
       <input
         type="text"
-        placeholder="Search doctor, hospital, product..."
+        placeholder="🔍 Search doctor, hospital or product..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         style={{
           width: "100%",
-          marginBottom: "15px",
-          padding: "10px",
+          marginBottom: "16px",
+          padding: "10px 12px",
           borderRadius: "8px",
           border: "1px solid #ddd",
         }}
       />
 
       {filtered.length === 0 ? (
-        <p className="muted-text">No interactions found.</p>
+        <div
+          style={{
+            textAlign: "center",
+            padding: "30px",
+            color: "#777",
+          }}
+        >
+          No interactions found.
+        </div>
       ) : (
-        filtered.map((item, index) => (
-          <div
-            key={item.id}
-            className={`history-card compact ${
-              selectedInteraction?.id === item.id
-                ? "history-card-active"
-                : ""
-            }`}
-            onClick={() => {
-              dispatch(setSelectedInteraction(item));
+        filtered.map((item, index) => {
+          const sentiment = getSentiment(item.sentiment);
 
-              dispatch(
-                setFormData({
-                  doctor_name: item.doctor_name,
-                  hospital: item.hospital,
-                  meeting_type: item.meeting_type,
-                  product: item.product,
-                  sentiment: item.sentiment,
-                  materials_shared: item.materials_shared,
-                  follow_up: item.follow_up,
-                })
-              );
-            }}
-          >
-            <span className="history-card-index">{index + 1}</span>
+          return (
+            <div
+              key={item.id}
+              className={`history-card compact ${
+                selectedInteraction?.id === item.id
+                  ? "history-card-active"
+                  : ""
+              }`}
+              onClick={() => {
+                dispatch(setSelectedInteraction(item));
 
-            <div className="history-card-main">
-              <div className="history-card-heading">
-                <strong>{item.doctor_name}</strong>
-              </div>
-
-              <div className="history-card-sub">
-                {item.hospital}
-                {item.product ? ` · ${item.product}` : ""}
-              </div>
-
-              <small>{item.created_at}</small>
-            </div>
-
-            <button
-              className="icon-button icon-button-danger"
-              title="Delete interaction"
-              onClick={(e) => {
-                e.stopPropagation();
-                deleteInteraction(item.id);
+                dispatch(
+                  setFormData({
+                    doctor_name: item.doctor_name || "",
+                    hospital: item.hospital || "",
+                    meeting_type: item.meeting_type || "",
+                    product: item.product || "",
+                    topics_discussed:
+                      item.topics_discussed || "",
+                    sentiment: item.sentiment || "",
+                    materials_shared:
+                      item.materials_shared || "",
+                    outcomes: item.outcomes || "",
+                    follow_up: item.follow_up || "",
+                  })
+                );
               }}
             >
-              <TrashIcon />
-            </button>
-          </div>
-        ))
+              <span className="history-card-index">
+                {index + 1}
+              </span>
+
+              <div className="history-card-main">
+                <div className="history-card-heading">
+                  <strong>{item.doctor_name}</strong>
+                </div>
+
+                <div className="history-card-sub">
+                  {item.hospital}
+
+                  {item.product
+                    ? ` • ${item.product}`
+                    : ""}
+                </div>
+
+                <div
+                  style={{
+                    marginTop: "6px",
+                    fontSize: "13px",
+                    color: sentiment.color,
+                    fontWeight: 600,
+                  }}
+                >
+                  {sentiment.text}
+                </div>
+
+                <small
+                  style={{
+                    display: "block",
+                    marginTop: "6px",
+                    color: "#777",
+                  }}
+                >
+                  📅 {formatDate(item.created_at)}
+                </small>
+              </div>
+
+              <button
+                className="icon-button icon-button-danger"
+                title="Delete Interaction"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteInteraction(item.id);
+                }}
+              >
+                <TrashIcon />
+              </button>
+            </div>
+          );
+        })
       )}
     </div>
   );
