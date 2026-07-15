@@ -88,7 +88,7 @@ function InteractionHistory() {
 
   async function deleteInteraction(id) {
     const ok = window.confirm(
-      "Delete this interaction?"
+      "Are you sure you want to delete this interaction?"
     );
 
     if (!ok) return;
@@ -142,7 +142,7 @@ function InteractionHistory() {
           No interactions found.
         </div>
       ) : (
-        filtered.map((item, index) => {
+        filtered.map((item) => {
           const sentiment = getSentiment(item.sentiment);
 
           return (
@@ -173,8 +173,12 @@ function InteractionHistory() {
                 );
               }}
             >
+              {/*
+                Real database id — same number the AI mentions in
+                chat (e.g. search results), so it always matches.
+              */}
               <span className="history-card-index">
-                {index + 1}
+                {item.id}
               </span>
 
               <div className="history-card-main">

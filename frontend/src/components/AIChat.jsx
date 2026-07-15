@@ -2,6 +2,26 @@ import { useState, useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { setFormData } from "../store/crmSlice";
 
+function formatSearchResults(results) {
+  if (!results || results.length === 0) {
+    return "No matching interactions found.";
+  }
+
+  return results
+    .map((item) => {
+      return `${item.doctor_name || "-"}  (ID: ${item.id})
+
+Hospital : ${item.hospital || "-"}
+
+Product : ${item.product || "-"}
+
+Sentiment : ${item.sentiment || "-"}
+
+Logged on : ${item.created_at || "-"}`;
+    })
+    .join("\n\n———\n\n");
+}
+
 function AIChat({ loadInteractions }) {
   const dispatch = useDispatch();
 
@@ -86,7 +106,7 @@ The CRM form has been updated automatically.`;
       } else if (data.summary) {
         assistantReply = data.summary;
       } else if (data.results) {
-        assistantReply = JSON.stringify(data.results, null, 2);
+        assistantReply = formatSearchResults(data.results);
       } else if (data.suggestions) {
         assistantReply = data.suggestions;
       } else if (data.message) {
