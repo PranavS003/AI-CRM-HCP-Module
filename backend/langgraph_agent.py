@@ -22,11 +22,23 @@ class AgentState(TypedDict):
 
 def extract_id(text: str):
     """
-    Fallback only: if the user explicitly typed a numeric interaction
-    id (e.g. 'edit interaction 4 ...'), use it directly.
+    Fallback only: only treat a number as an explicit interaction id
+    if it's clearly LABELED as one — e.g. "interaction 4", "id 4",
+    "#4". A bare number sitting in the sentence for another reason
+    (like a dosage, "CardioPlus 40 mg") must NOT be mistaken for an
+    id, or edits/follow-ups get pointed at the wrong record.
     """
-    match = re.search(r"\b(\d+)\b", text)
-    return int(match.group(1)) if match else None
+    match = re.search(
+        r"\b(?:interaction|id)\s*[:\-#]?\s*(\d+)\b|#(\d+)\b",
+        text,
+        re.IGNORECASE,
+    )
+
+    if not match:
+        return None
+
+    number = match.group(1) or match.group(2)
+    return int(number)
 
 
 ROUTER_PROMPT = """
@@ -49,7 +61,8 @@ Tools:
   name for that last entry").
 - "search_interaction": the user wants to find/look up existing
   interactions (e.g. "find interactions with Dr Smith", "show me
-  meetings about Product X").
+  meetings about Product X", "interactions with Dr Smith", "history
+  of Dr Smith").
 - "generate_summary": the user wants an overview/report of all
   interactions.
 - "suggest_follow_up": the user wants follow-up action suggestions
@@ -63,9 +76,19 @@ Smith" or "Dr. Smith") so it can be matched regardless of how the
 title was punctuated when originally logged. If the message doesn't
 refer to any specific existing interaction, set target to null.
 
+If (and only if) the tool is "search_interaction", also decide a
+"detail" flag:
+- true  -> the user wants the FULL details / everything logged about
+  those interactions (phrases like "interactions with Dr Smith",
+  "history of Dr Smith", "show me everything about Dr Smith",
+  "full details", "all interactions with Dr Smith").
+- false -> the user just wants a quick lookup (phrases like "search
+  for Dr Smith", "find Dr Smith", "look up Dr Smith").
+For every other tool, set "detail" to false.
+
 Return ONLY valid JSON in this exact shape, nothing else:
 
-{{"tool": "log_interaction", "target": null}}
+{{"tool": "log_interaction", "target": null, "detail": false}}
 """
 
 
@@ -85,7 +108,7 @@ def route(text: str):
     except json.JSONDecodeError:
         # If the LLM ever returns something malformed, fall back to
         # treating the message as a new log rather than crashing.
-        decision = {"tool": "log_interaction", "target": None}
+        decision = {"tool": "log_interaction", "target": None, "detail": False}
 
     return decision
 
@@ -93,7 +116,7 @@ def route(text: str):
 def resolve_interaction_id(text: str, target: str):
     """
     Figure out which interaction the user means:
-    1. An explicit number in the message always wins.
+    1. An explicit, clearly-labeled id in the message always wins.
     2. Otherwise search by the "target" name/keyword the router
        found and use the most recent match.
     """
@@ -117,6 +140,7 @@ def agent_node(state: AgentState):
     decision = route(text)
     tool = decision.get("tool", "log_interaction")
     target = decision.get("target")
+    detail = decision.get("detail", False)
 
     if tool == "generate_summary":
 
@@ -125,6 +149,9 @@ def agent_node(state: AgentState):
     elif tool == "search_interaction":
 
         result = search_interaction(target or text)
+        # Tell the frontend whether to show the full details or
+        # just a short lookup line per interaction.
+        result["mode"] = "detailed" if detail else "summary"
 
     elif tool == "edit_interaction":
 

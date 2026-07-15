@@ -2,22 +2,43 @@ import { useState, useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { setFormData } from "../store/crmSlice";
 
-function formatSearchResults(results) {
+function formatSearchResults(results, mode) {
   if (!results || results.length === 0) {
     return "No matching interactions found.";
   }
 
+  if (mode === "detailed") {
+    return results
+      .map((item) => {
+        return `${item.doctor_name || "-"}  (ID: ${item.id})
+
+Hospital : ${item.hospital || "-"}
+
+Meeting Type : ${item.meeting_type || "-"}
+
+Product : ${item.product || "-"}
+
+Topics Discussed : ${item.topics_discussed || "-"}
+
+Sentiment : ${item.sentiment || "-"}
+
+Materials Shared : ${item.materials_shared || "-"}
+
+Outcomes : ${item.outcomes || "-"}
+
+Follow-up : ${item.follow_up || "-"}
+
+Logged on : ${item.created_at || "-"}`;
+      })
+      .join("\n\n———\n\n");
+  }
+
+  // Quick lookup: just enough to identify each interaction.
   return results
     .map((item) => {
       return `${item.doctor_name || "-"}  (ID: ${item.id})
 
-Hospital : ${item.hospital || "-"}
-
-Product : ${item.product || "-"}
-
-Sentiment : ${item.sentiment || "-"}
-
-Logged on : ${item.created_at || "-"}`;
+Hospital : ${item.hospital || "-"}`;
     })
     .join("\n\n———\n\n");
 }
@@ -75,7 +96,7 @@ function AIChat({ loadInteractions }) {
 
       let assistantReply = "Interaction processed.";
 
-      if (data.data) {
+      if (data.tool === "log_interaction" && data.data) {
         dispatch(
           setFormData({
             doctor_name: data.data.doctor_name || "",
@@ -90,7 +111,7 @@ function AIChat({ loadInteractions }) {
           })
         );
 
-        assistantReply = `✅ Interaction Logged Successfully
+        assistantReply = `📋 Interaction Logged
 
 Doctor : ${data.data.doctor_name || "-"}
 
@@ -103,14 +124,53 @@ Product : ${data.data.product || "-"}
 Sentiment : ${data.data.sentiment || "-"}
 
 The CRM form has been updated automatically.`;
-      } else if (data.summary) {
-        assistantReply = data.summary;
-      } else if (data.results) {
-        assistantReply = formatSearchResults(data.results);
-      } else if (data.suggestions) {
-        assistantReply = data.suggestions;
+      } else if (data.tool === "edit_interaction" && data.status === "success") {
+        dispatch(
+          setFormData({
+            doctor_name: data.data.doctor_name || "",
+            hospital: data.data.hospital || "",
+            meeting_type: data.data.meeting_type || "",
+            product: data.data.product || "",
+            topics_discussed: data.data.topics_discussed || "",
+            sentiment: data.data.sentiment || "",
+            materials_shared: data.data.materials_shared || "",
+            outcomes: data.data.outcomes || "",
+            follow_up: data.data.follow_up || "",
+          })
+        );
+
+        assistantReply = `✏️ Interaction Updated
+
+Doctor : ${data.data.doctor_name || "-"}
+
+Hospital : ${data.data.hospital || "-"}
+
+Meeting : ${data.data.meeting_type || "-"}
+
+Product : ${data.data.product || "-"}
+
+Sentiment : ${data.data.sentiment || "-"}
+
+Changes have been saved.`;
+      } else if (data.tool === "search_interaction") {
+        const heading =
+          data.mode === "detailed"
+            ? "📖 Interaction Details"
+            : "🔍 Search Results";
+
+        assistantReply = `${heading}
+
+${formatSearchResults(data.results, data.mode)}`;
+      } else if (data.tool === "generate_summary") {
+        assistantReply = `📊 Summary
+
+${data.summary}`;
+      } else if (data.tool === "suggest_follow_up" && data.status === "success") {
+        assistantReply = `💡 Follow-up Suggestions
+
+${data.suggestions}`;
       } else if (data.message) {
-        assistantReply = data.message;
+        assistantReply = `⚠️ ${data.message}`;
       }
 
       setMessages((prev) => [
