@@ -135,23 +135,45 @@ def search_interaction(keyword: str):
     }
 
 
-def generate_summary():
+def generate_summary(target: str = None):
     """
     Tool 4
-    Summarize all interactions using Groq.
+    Summarize interactions using Groq.
+
+    If "target" is given (a doctor name or keyword), only that
+    person's interactions are summarized. Otherwise, every logged
+    interaction across every doctor is summarized.
     """
 
-    interactions = get_all_interactions()
+    if target:
+        interactions = search_interactions(target)
+    else:
+        interactions = get_all_interactions()
 
     if not interactions:
+        message = (
+            f"No interactions found for '{target}'."
+            if target
+            else "No interactions available."
+        )
+
         return {
             "tool": "generate_summary",
             "status": "success",
-            "summary": "No interactions available.",
+            "target": target,
+            "summary": message,
         }
+
+    scope_line = (
+        f"These are all interactions involving {target}."
+        if target
+        else "These are all logged interactions across every doctor."
+    )
 
     prompt = f"""
 Summarize these HCP interactions.
+
+{scope_line}
 
 Focus on
 
@@ -171,6 +193,7 @@ Interactions
     return {
         "tool": "generate_summary",
         "status": "success",
+        "target": target,
         "summary": summary,
     }
 

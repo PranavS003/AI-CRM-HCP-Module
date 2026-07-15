@@ -49,7 +49,7 @@ A field representative just sent this message:
 "{text}"
 
 Decide which ONE tool should handle it, and (if relevant) which
-existing interaction it refers to.
+existing interaction or doctor it refers to.
 
 Tools:
 - "log_interaction": the user is describing a NEW HCP interaction
@@ -63,32 +63,34 @@ Tools:
   interactions (e.g. "find interactions with Dr Smith", "show me
   meetings about Product X", "interactions with Dr Smith", "history
   of Dr Smith").
-- "generate_summary": the user wants an overview/report of all
-  interactions.
+- "generate_summary": the user wants a summary/overview of
+  interactions — either of EVERYTHING, or of ONE specific doctor
+  (e.g. "summarize all my interactions" vs "summarize interactions
+  with Dr Smith" / "give me Dr Smith's summary").
 - "suggest_follow_up": the user wants follow-up action suggestions
   for a specific interaction.
 
-Also extract a short "target" string that identifies WHICH interaction
-is being referred to (only needed for "edit_interaction" and
-"suggest_follow_up"). IMPORTANT: if the target is a person, return
-ONLY their surname/last name with NO title (write "Smith", not "Dr
-Smith" or "Dr. Smith") so it can be matched regardless of how the
-title was punctuated when originally logged. If the message doesn't
-refer to any specific existing interaction, set target to null.
+Also extract a short "target" string. How it's used depends on the
+tool:
+- For "edit_interaction" and "suggest_follow_up": REQUIRED — the
+  doctor whose interaction should be found.
+- For "generate_summary": OPTIONAL — only set it if the user named a
+  specific doctor to summarize. Leave it null for an overall summary
+  of everything.
+- For "search_interaction": the keyword to search for (can be a
+  doctor name, product, hospital, etc).
 
-If (and only if) the tool is "search_interaction", also decide a
-"detail" flag:
-- true  -> the user wants the FULL details / everything logged about
-  those interactions (phrases like "interactions with Dr Smith",
-  "history of Dr Smith", "show me everything about Dr Smith",
-  "full details", "all interactions with Dr Smith").
-- false -> the user just wants a quick lookup (phrases like "search
-  for Dr Smith", "find Dr Smith", "look up Dr Smith").
-For every other tool, set "detail" to false.
+IMPORTANT: if the target is a person's name, return ONLY their
+surname/last name with NO title (write "Smith", not "Dr Smith" or
+"Dr. Smith") so it can be matched regardless of how the title was
+punctuated when originally logged.
+
+If the message doesn't refer to any specific existing interaction or
+doctor, set target to null.
 
 Return ONLY valid JSON in this exact shape, nothing else:
 
-{{"tool": "log_interaction", "target": null, "detail": false}}
+{{"tool": "log_interaction", "target": null}}
 """
 
 
@@ -108,7 +110,7 @@ def route(text: str):
     except json.JSONDecodeError:
         # If the LLM ever returns something malformed, fall back to
         # treating the message as a new log rather than crashing.
-        decision = {"tool": "log_interaction", "target": None, "detail": False}
+        decision = {"tool": "log_interaction", "target": None}
 
     return decision
 
@@ -140,18 +142,14 @@ def agent_node(state: AgentState):
     decision = route(text)
     tool = decision.get("tool", "log_interaction")
     target = decision.get("target")
-    detail = decision.get("detail", False)
 
     if tool == "generate_summary":
 
-        result = generate_summary()
+        result = generate_summary(target)
 
     elif tool == "search_interaction":
 
         result = search_interaction(target or text)
-        # Tell the frontend whether to show the full details or
-        # just a short lookup line per interaction.
-        result["mode"] = "detailed" if detail else "summary"
 
     elif tool == "edit_interaction":
 

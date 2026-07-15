@@ -2,38 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { setFormData } from "../store/crmSlice";
 
-function formatSearchResults(results, mode) {
+function formatSearchResults(results) {
   if (!results || results.length === 0) {
     return "No matching interactions found.";
   }
 
-  if (mode === "detailed") {
-    return results
-      .map((item) => {
-        return `${item.doctor_name || "-"}  (ID: ${item.id})
-
-Hospital : ${item.hospital || "-"}
-
-Meeting Type : ${item.meeting_type || "-"}
-
-Product : ${item.product || "-"}
-
-Topics Discussed : ${item.topics_discussed || "-"}
-
-Sentiment : ${item.sentiment || "-"}
-
-Materials Shared : ${item.materials_shared || "-"}
-
-Outcomes : ${item.outcomes || "-"}
-
-Follow-up : ${item.follow_up || "-"}
-
-Logged on : ${item.created_at || "-"}`;
-      })
-      .join("\n\n———\n\n");
-  }
-
-  // Quick lookup: just enough to identify each interaction.
   return results
     .map((item) => {
       return `${item.doctor_name || "-"}  (ID: ${item.id})
@@ -153,16 +126,15 @@ Sentiment : ${data.data.sentiment || "-"}
 
 Changes have been saved.`;
       } else if (data.tool === "search_interaction") {
-        const heading =
-          data.mode === "detailed"
-            ? "📖 Interaction Details"
-            : "🔍 Search Results";
+        assistantReply = `🔍 Search Results
+
+${formatSearchResults(data.results)}`;
+      } else if (data.tool === "generate_summary") {
+        const heading = data.target
+          ? `📊 Summary — ${data.target}`
+          : "📊 Summary";
 
         assistantReply = `${heading}
-
-${formatSearchResults(data.results, data.mode)}`;
-      } else if (data.tool === "generate_summary") {
-        assistantReply = `📊 Summary
 
 ${data.summary}`;
       } else if (data.tool === "suggest_follow_up" && data.status === "success") {
